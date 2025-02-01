@@ -1,7 +1,7 @@
 <?php
 
 
-function getPolicies()
+function getAbilitiesFromPolicyClasses()
 {
     $modelsClasses = array_map(function ($filePath) {
         return 'App\\Models\\' . str_replace('.php', '', $filePath);
@@ -48,7 +48,7 @@ echo collect(\Illuminate\Support\Facades\Gate::abilities())
         ];
     })
     ->merge(
-        collect(getPolicies())->flatMap(function ($policyClass, $modelClass) {
+        collect(getAbilitiesFromPolicyClasses())->flatMap(function ($policyClass, $modelClass) {
             $methods = (new ReflectionClass($policyClass))->getMethods();
 
             return collect($methods)->map(function (ReflectionMethod $method) use ($policyClass,$modelClass) {

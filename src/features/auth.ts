@@ -1,6 +1,6 @@
 import { notFound } from "@src/diagnostic";
 import AutocompleteResult from "@src/parser/AutocompleteResult";
-import { getPolicies } from "@src/repositories/auth";
+import { getRegisteredAbilitiesInLaravelProject } from "@src/repositories/auth";
 import { config } from "@src/support/config";
 import { findHoverMatchesInDoc } from "@src/support/doc";
 import { detectedRange, detectInDoc } from "@src/support/parser";
@@ -44,9 +44,9 @@ export const linkProvider: LinkProvider = (doc: vscode.TextDocument) => {
     return detectInDoc<vscode.DocumentLink, "string">(
         doc,
         toFind,
-        getPolicies,
+        getRegisteredAbilitiesInLaravelProject,
         ({ param }) => {
-            const policy = getPolicies().items[param.value];
+            const policy = getRegisteredAbilitiesInLaravelProject().items[param.value];
 
             if (!policy || policy.length === 0) {
                 return null;
@@ -68,8 +68,8 @@ export const hoverProvider: HoverProvider = (
     doc: vscode.TextDocument,
     pos: vscode.Position,
 ): vscode.ProviderResult<vscode.Hover> => {
-    return findHoverMatchesInDoc(doc, pos, toFind, getPolicies, (match) => {
-        const items = getPolicies().items[match];
+    return findHoverMatchesInDoc(doc, pos, toFind, getRegisteredAbilitiesInLaravelProject, (match) => {
+        const items = getRegisteredAbilitiesInLaravelProject().items[match];
 
         if (!items || items.length === 0) {
             return null;
@@ -104,19 +104,19 @@ export const diagnosticProvider = (
     return detectInDoc<vscode.Diagnostic, "string">(
         doc,
         toFind,
-        getPolicies,
-        createCallbackWithMemory(),
+        getRegisteredAbilitiesInLaravelProject,
+        createDiagnosticClosure(),
         ["string","methodCall"]
     );
 };
-const createCallbackWithMemory =()=>{
+const createDiagnosticClosure =()=>{
     let previousParam: any = null;
-    return function callback({param}){
+    return function createDiagnostic({param}){
         if(param.type === "string"){
 
             previousParam = param;
 
-            if (getPolicies().items[param.value]) {
+            if (getRegisteredAbilitiesInLaravelProject().items[param.value]) {
                 return null;
             }
 
@@ -129,7 +129,7 @@ const createCallbackWithMemory =()=>{
         } else if(param.type === "methodCall"){
 
           
-            let policy =  getPolicies().items[previousParam.value][0];
+            let policy =  getRegisteredAbilitiesInLaravelProject().items[previousParam.value][0];
             if(policy.model_class === param.className){
                 return null;
             }
@@ -165,7 +165,7 @@ export const completionProvider: CompletionProvider = {
             return [];
         }
 
-        return Object.entries(getPolicies().items).map(([key, value]) => {
+        return Object.entries(getRegisteredAbilitiesInLaravelProject().items).map(([key, value]) => {
             let completeItem = new vscode.CompletionItem(
                 value[0].key,
                 vscode.CompletionItemKind.Value,
