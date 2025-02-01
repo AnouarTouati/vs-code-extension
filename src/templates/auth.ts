@@ -1,5 +1,26 @@
 // This file was generated from php-templates/auth.php, do not edit directly
 export default `
+function getPolicies()
+{
+    $modelsClasses = array_map(function ($filePath) {
+        return 'App\\\\Models\\\\' . str_replace('.php', '', $filePath);
+    }, scandir(__DIR__ . '/../../app/Models'));
+
+    $policies = [];
+
+    foreach ($modelsClasses as $modelClass) {
+        try {
+            $policyInstance = \\Illuminate\\Support\\Facades\\Gate::getPolicyFor($modelClass);
+            $policyClass = get_class($policyInstance);
+            $policies[$modelClass] = $policyClass;
+        } catch (\\Throwable $throwable) {
+            //Do nothing
+        }
+    }
+
+    return $policies;
+
+}
 echo collect(\\Illuminate\\Support\\Facades\\Gate::abilities())
     ->map(function ($policy, $key) {
         $reflection = new \\ReflectionFunction($policy);
@@ -26,7 +47,7 @@ echo collect(\\Illuminate\\Support\\Facades\\Gate::abilities())
         ];
     })
     ->merge(
-        collect(\\Illuminate\\Support\\Facades\\Gate::policies())->flatMap(function ($policy, $model) {
+        collect(getPolicies())->flatMap(function ($policy, $model) {
             $methods = (new ReflectionClass($policy))->getMethods();
 
             return collect($methods)->map(function (ReflectionMethod $method) use ($policy) {
