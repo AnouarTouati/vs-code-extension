@@ -115,8 +115,9 @@ const createDiagnosticClosure =()=>{
         if(param.type === "string"){
 
             previousParam = param;
+            const abilitiesHavingTheSameNameAsParamValue = getRegisteredAbilitiesInLaravelProject().items[param.value];
 
-            if (getRegisteredAbilitiesInLaravelProject().items[param.value]) {
+            if (abilitiesHavingTheSameNameAsParamValue) {
                 return null;
             }
 
@@ -129,13 +130,16 @@ const createDiagnosticClosure =()=>{
         } else if(param.type === "methodCall"){
 
           
-            let policy =  getRegisteredAbilitiesInLaravelProject().items[previousParam.value][0];
-            if(policy.model_class === param.className){
+            const abilitiesHavingTheSameNameAsParamValue =  getRegisteredAbilitiesInLaravelProject().items[previousParam.value];
+            const abilityWithMatchingModelClassFound  = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === param.className);
+            
+            if(abilityWithMatchingModelClassFound){
                 return null;
             }
-        
+
             const previousParamCopy = structuredClone(previousParam);
             previousParam = null;
+
             return notFound(
                 "Policy",
                 previousParamCopy.value,
