@@ -18,6 +18,6 @@ const load = () => {
 
 export const getPolicies = repository<AuthItems>(
     load,
-    "app/Providers/{,*,**/*}.php",
+    ["app/Providers/{,*,**/*}.php","app/Policies/**.php"],
     {},
 );
