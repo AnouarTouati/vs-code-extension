@@ -7,6 +7,7 @@ interface AuthItems {
 
 interface AuthItem {
     key: string;
+    model_class: string | null;
     policy_class: string | null;
     uri: string;
     lineNumber: number;

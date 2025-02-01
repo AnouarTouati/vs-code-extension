@@ -105,7 +105,17 @@ export const diagnosticProvider = (
         doc,
         toFind,
         getPolicies,
-        ({ param }) => {
+        createCallbackWithMemory(),
+        ["string","methodCall"]
+    );
+};
+const createCallbackWithMemory =()=>{
+    let previousParam: any = null;
+    return function callback({param}){
+        if(param.type === "string"){
+
+            previousParam = param;
+
             if (getPolicies().items[param.value]) {
                 return null;
             }
@@ -116,10 +126,25 @@ export const diagnosticProvider = (
                 detectedRange(param),
                 "auth",
             );
-        },
-    );
-};
+        } else if(param.type === "methodCall"){
 
+          
+            let policy =  getPolicies().items[previousParam.value][0];
+            if(policy.model_class === param.className){
+                return null;
+            }
+        
+            const previousParamCopy = structuredClone(previousParam);
+            previousParam = null;
+            return notFound(
+                "Policy",
+                previousParamCopy.value,
+                detectedRange(previousParamCopy),
+                "auth",
+            );
+        }
+    };
+}
 export const completionProvider: CompletionProvider = {
     tags() {
         return toFind;

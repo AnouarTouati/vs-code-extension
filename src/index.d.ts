@@ -34,7 +34,7 @@ interface View {
 
 type FeatureTag = FeatureTagParam | FeatureTagParam[];
 
-type ValidDetectParamTypes = "string" | "array";
+type ValidDetectParamTypes = "string" | "array" |"methodCall";
 
 type HoverProvider = (
     doc: vscode.TextDocument,

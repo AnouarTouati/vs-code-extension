@@ -47,14 +47,15 @@ echo collect(\\Illuminate\\Support\\Facades\\Gate::abilities())
         ];
     })
     ->merge(
-        collect(getPolicies())->flatMap(function ($policy, $model) {
-            $methods = (new ReflectionClass($policy))->getMethods();
+        collect(getPolicies())->flatMap(function ($policyClass, $modelClass) {
+            $methods = (new ReflectionClass($policyClass))->getMethods();
 
-            return collect($methods)->map(function (ReflectionMethod $method) use ($policy) {
+            return collect($methods)->map(function (ReflectionMethod $method) use ($policyClass,$modelClass) {
                 return [
                     'key' => $method->getName(),
                     'uri' => $method->getFileName(),
-                    'policy_class' => $policy,
+                    'policy_class' => $policyClass,
+                    'model_class' => $modelClass,
                     'lineNumber' => $method->getStartLine(),
                 ];
             })->filter(function ($ability) {
