@@ -131,11 +131,15 @@ const createDiagnosticClosure =()=>{
 
           
             const abilitiesHavingTheSameNameAsParamValue =  getRegisteredAbilitiesInLaravelProject().items[previousParam.value];
-            const abilityWithMatchingModelClassFound  = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === param.className);
+            if(abilitiesHavingTheSameNameAsParamValue){
+
+                const abilityWithMatchingModelClassFound  = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === param.className);
             
-            if(abilityWithMatchingModelClassFound){
-                return null;
+                if(abilityWithMatchingModelClassFound){
+                    return null;
+                }
             }
+            
 
             const previousParamCopy = structuredClone(previousParam);
             previousParam = null;
