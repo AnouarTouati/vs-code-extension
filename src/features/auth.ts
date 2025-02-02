@@ -105,60 +105,111 @@ export const diagnosticProvider = (
         doc,
         toFind,
         getRegisteredAbilitiesInLaravelProject,
-        createDiagnosticClosure(),
+        createDiagnostic,
         ["string","methodCall",'array']
     );
 };
-const createDiagnosticClosure =()=>{
-    let previousParam: any = null;
-    return function createDiagnostic({param}){
-        if(param.type === "string"){
 
-            previousParam = param;
-            const abilitiesHavingTheSameNameAsParamValue = getRegisteredAbilitiesInLaravelProject().items[param.value];
+const createDiagnostic = ({param, index, item})=>{
+   
+    //methodCall corresponds to Gate::method i.e. Gate::allows, Gate::authroize etc..
+    if(index === 0 && item.type === "methodCall"){
+        let firstParameter = item.arguments.children[0].children[0];
+        
+        const abilitiesHavingTheSameNameAsParamValue = getRegisteredAbilitiesInLaravelProject().items[firstParameter.value];
 
-            if (abilitiesHavingTheSameNameAsParamValue) {
+        if(!abilitiesHavingTheSameNameAsParamValue){
+            return notFound(
+                "Policy",
+                firstParameter.value,
+                detectedRange(firstParameter),
+                "auth",
+            );
+        }
+
+        //If we only have one argument only search for abilities in AppServiceProvider
+        if(item.arguments.children.length === 1){
+            
+            const gateAbilityFound = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.policy_class === null);
+            if (gateAbilityFound) {
+            
+                return null;
+            }
+    
+            return notFound(
+                "Policy",
+                firstParameter.value,
+                detectedRange(firstParameter),
+                "auth",
+            );
+            
+        }
+        //If we have two arguments only search for abilities in Policies methods 
+        else  if(item.arguments.children.length === 2){
+
+            let secondParameter = item.arguments.children[1].children[0];
+
+            if(!secondParameter){
+                return notFound(
+                    "Policy",
+                    firstParameter.value,
+                    detectedRange(firstParameter),
+                    "auth",
+                );
+            }
+            //methodCall corresponds to Model::class, array corresponds to [$modelInstance,'App\\Models\\Model']
+            if(secondParameter.type !== "methodCall" && secondParameter.type !== "array"){
+                return notFound(
+                    "Policy",
+                    firstParameter.value,
+                    detectedRange(firstParameter),
+                    "auth",
+                );
+            }
+            
+            let modelClass = null;
+            if(secondParameter.type === "array") {
+                if(secondParameter.children.length < 2){
+                    return notFound(
+                        "Policy",
+                        firstParameter.value,
+                        detectedRange(firstParameter),
+                        "auth",
+                    );
+                }
+                if(!secondParameter.children[secondParameter.children.length - 1].value){
+                    return notFound(
+                        "Policy",
+                        firstParameter.value,
+                        detectedRange(firstParameter),
+                        "auth",
+                    );
+                }
+                modelClass = secondParameter.children[secondParameter.children.length - 1].value.value;
+            }
+        
+            if (secondParameter.type === "methodCall") {
+                modelClass = secondParameter.className;
+            }
+
+            const abilityWithMatchingModelClassFound  = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === modelClass);
+        
+            if( abilityWithMatchingModelClassFound ){
                 return null;
             }
 
             return notFound(
                 "Policy",
-                param.value,
-                detectedRange(param),
-                "auth",
-            );
-        } else if(param.type === "methodCall" || param.type === "array"){
-
-            let className = null;
-            if(param.type === "methodCall"){
-                className = param.className;
-            }else{
-               className = param.children[param.children.length - 1].value.value;
-            }
-          
-            const abilitiesHavingTheSameNameAsParamValue =  getRegisteredAbilitiesInLaravelProject().items[previousParam.value];
-            if(abilitiesHavingTheSameNameAsParamValue){
-
-                const abilityWithMatchingModelClassFound  = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === className);
-            
-                if(abilityWithMatchingModelClassFound){
-                    return null;
-                }
-            }
-            
-
-            const previousParamCopy = structuredClone(previousParam);
-            previousParam = null;
-
-            return notFound(
-                "Policy",
-                previousParamCopy.value,
-                detectedRange(previousParamCopy),
+                firstParameter.value,
+                detectedRange(firstParameter),
                 "auth",
             );
         }
+
+    }
+      return null;
     };
-}
+
 export const completionProvider: CompletionProvider = {
     tags() {
         return toFind;
