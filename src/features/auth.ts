@@ -106,7 +106,7 @@ export const diagnosticProvider = (
         toFind,
         getRegisteredAbilitiesInLaravelProject,
         createDiagnosticClosure(),
-        ["string","methodCall"]
+        ["string","methodCall",'array']
     );
 };
 const createDiagnosticClosure =()=>{
@@ -127,13 +127,19 @@ const createDiagnosticClosure =()=>{
                 detectedRange(param),
                 "auth",
             );
-        } else if(param.type === "methodCall"){
+        } else if(param.type === "methodCall" || param.type === "array"){
 
+            let className = null;
+            if(param.type === "methodCall"){
+                className = param.className;
+            }else{
+               className = param.children[param.children.length - 1].value.value;
+            }
           
             const abilitiesHavingTheSameNameAsParamValue =  getRegisteredAbilitiesInLaravelProject().items[previousParam.value];
             if(abilitiesHavingTheSameNameAsParamValue){
 
-                const abilityWithMatchingModelClassFound  = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === param.className);
+                const abilityWithMatchingModelClassFound  = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === className);
             
                 if(abilityWithMatchingModelClassFound){
                     return null;
