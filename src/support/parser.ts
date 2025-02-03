@@ -279,8 +279,8 @@ export const detectInDoc = <T, U extends ValidDetectParamTypes>(
                                         return toArray<T | T[] | null>(
                                             cb({
                                                 param: finalParam,
-                                                index,
-                                                item,
+                                                index: index,
+                                               item: item,
                                             }),
                                         );
                                     } catch (e) {
