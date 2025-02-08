@@ -23,31 +23,59 @@ function getAbilitiesFromPolicyClasses()
 
 }
 echo collect(\Illuminate\Support\Facades\Gate::abilities())
-    ->map(function ($policy, $key) {
-        $reflection = new \ReflectionFunction($policy);
-        $policyClass = null;
-        $closureThis = $reflection->getClosureThis();
+->map(function ($policy, $key) {
 
-        if ($closureThis !== null) {
-            if (get_class($closureThis) === \Illuminate\Auth\Access\Gate::class) {
-                $vars = $reflection->getClosureUsedVariables();
+    $reflection = new \ReflectionFunction($policy);
 
-                if (isset($vars['callback'])) {
-                    [$policyClass, $method] = explode('@', $vars['callback']);
+   //Class callback array
+  if($reflection->getClosureScopeClass()->name === 'Illuminate\Auth\Access\Gate'){
 
-                    $reflection = new \ReflectionMethod($policyClass, $method);
+    $policyClass = null;
+    $modelClass = null;
+    $closureThis = $reflection->getClosureThis();
+
+    if ($closureThis !== null) {
+        if (get_class($closureThis) === \Illuminate\Auth\Access\Gate::class) {
+            $vars = $reflection->getClosureUsedVariables();
+
+            if (isset($vars['callback'])) {
+                [$policyClass, $method] = explode('@', $vars['callback']);
+
+                $reflection = new \ReflectionMethod($policyClass, $method);
+               
+                if(count($reflection->getParameters())>=2){
+                    $modelClass= $reflection->getParameters()[1]->getType()->__tostring();
                 }
             }
+        }
+    }
+
+    return [
+        'key' => $key,
+        'uri' => $reflection->getFileName(),
+        'policy_class' => $policyClass,
+        'model_class' => $modelClass,
+        'lineNumber' => $reflection->getStartLine(),
+    ];
+     }
+     //closure callback
+    else if($reflection->getClosureScopeClass()->name ==='App\Providers\AppServiceProvider'){
+
+        $modelClass = null;
+        if(count($reflection->getParameters())>=2){
+            $modelClass= $reflection->getParameters()[1]->getType()->__tostring();
         }
 
         return [
             'key' => $key,
             'uri' => $reflection->getFileName(),
-            'policy_class' => $policyClass,
+            'policy_class' => null,
+            'model_class' => $modelClass,
             'lineNumber' => $reflection->getStartLine(),
         ];
-    })
-    ->merge(
+    }
+
+})->merge(
         collect(getAbilitiesFromPolicyClasses())->flatMap(function ($policyClass, $modelClass) {
             $methods = (new ReflectionClass($policyClass))->getMethods();
 

@@ -113,7 +113,7 @@ export const diagnosticProvider = (
 const createDiagnostic = ({param, index, item})=>{
    
     //methodCall corresponds to Gate::method i.e. Gate::allows, Gate::authroize etc..
-    if(index === 0 && item.type === "methodCall"){
+        if(index === 0 && item.type === "methodCall"){
         let firstParameter = item.arguments.children[0].children[0];
         
         const abilitiesHavingTheSameNameAsParamValue = getRegisteredAbilitiesInLaravelProject().items[firstParameter.value];
@@ -127,10 +127,9 @@ const createDiagnostic = ({param, index, item})=>{
             );
         }
 
-        //If we only have one argument only search for abilities in AppServiceProvider
         if(item.arguments.children.length === 1){
             
-            const gateAbilityFound = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.policy_class === null);
+            const gateAbilityFound = abilitiesHavingTheSameNameAsParamValue.some((ability) => ability.model_class === null);
             if (gateAbilityFound) {
             
                 return null;
@@ -144,7 +143,7 @@ const createDiagnostic = ({param, index, item})=>{
             );
             
         }
-        //If we have two arguments only search for abilities in Policies methods 
+       
         else  if(item.arguments.children.length === 2){
 
             let secondParameter = item.arguments.children[1].children[0];
